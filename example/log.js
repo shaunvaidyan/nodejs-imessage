@@ -1,5 +1,5 @@
-const imessage = require('..')
+import * as imessage from '../index.js';
 
 imessage.listen().on('message', (msg) => {
-    console.log(msg)
-})
+    console.log(msg);
+});
