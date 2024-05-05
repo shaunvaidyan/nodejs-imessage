@@ -23,7 +23,7 @@ Usage
 Be sure to import `better-osa-imessage`:
 
 ```js
-import * as imessage from 'osa-imessage';
+import * as imessage from 'better-osa-imessage';
 ```
 
 **Send a message**
