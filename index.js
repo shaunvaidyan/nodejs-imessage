@@ -95,6 +95,16 @@ function nameForHandle(handle) {
     })(handle, isParticipant);
 }
 
+function sendToGroup(handle) {
+    assert(typeof handle == 'string', 'handle must be a string');
+    return osa((handle, isParticipant) => {
+        const Messages = Application('Messages');
+        return isParticipant
+            ? Messages.chats.whose({ name: handle })[0].name()
+            : Messages.buddies.whose({ name: handle })[0].name();
+    })(handle, isParticipant);
+}
+
 // Sends a message to the given handle
 function send(handle, message) {
     assert(typeof handle == 'string', 'handle must be a string');
@@ -118,14 +128,17 @@ function sendMessageOrFile(handle, messageOrFilepath, isFile) {
 
         let target;
 
+        // try {
+        //     console.log(`first try`)
+        //     target = isParticipant
+        //         ? Messages.participants.whose({ handle: handle })[0]
+        //         : Messages.buddies.whose({ handle: handle })[0];
+        // } catch (e) {
+        //     console.log(`2nd try`)
+        //     target = Messages.chats.whose({ name: handle })[0];
+        // }
         try {
-            target = isParticipant
-                ? Messages.participants.whose({ handle: handle })[0]
-                : Messages.buddies.whose({ handle: handle })[0];
-        } catch (e) {}
-
-        try {
-            target = Messages.textChats.byId('iMessage;+;' + handle)();
+            target = Messages.chats.whose({ name: handle })[0];
         } catch (e) {}
 
         let message = messageOrFilepath;
@@ -140,7 +153,14 @@ function sendMessageOrFile(handle, messageOrFilepath, isFile) {
         try {
             Messages.send(message, { to: target });
         } catch (e) {
-            throw new Error(`no thread with handle '${handle}'`);
+            target = isParticipant
+                ? Messages.participants.whose({ handle: handle })[0]
+                : Messages.buddies.whose({ handle: handle })[0];
+                try {
+                    Messages.send(message, { to: target });
+                } catch (e){
+                    throw new Error(`no thread with handle '${handle}'`);
+                }
         }
     })(handle, messageOrFilepath, isParticipant, isFile);
 }
@@ -173,17 +193,17 @@ function listen() {
                 date_read,
                 is_from_me,
                 cache_roomnames,
-		CASE cache_has_attachments
-		    WHEN 0 THEN Null
-		    WHEN 1 THEN filename
-		END AS attachment,
-		CASE cache_has_attachments
-		    WHEN 0 THEN Null
-		    WHEN 1 THEN mime_type
-		END AS mime_type
+        CASE cache_has_attachments
+            WHEN 0 THEN Null
+            WHEN 1 THEN filename
+        END AS attachment,
+        CASE cache_has_attachments
+            WHEN 0 THEN Null
+            WHEN 1 THEN mime_type
+        END AS mime_type
             FROM message AS m
-	    LEFT JOIN message_attachment_join AS maj ON message_id = m.ROWID
-	    LEFT JOIN attachment AS a ON a.ROWID = maj.attachment_id
+        LEFT JOIN message_attachment_join AS maj ON message_id = m.ROWID
+        LEFT JOIN attachment AS a ON a.ROWID = maj.attachment_id
             LEFT JOIN handle AS h ON h.ROWID = m.handle_id
             WHERE date >= ${last}
         `;
@@ -246,4 +266,4 @@ async function getRecentChats(limit = 10) {
     return chats;
 }
 
-export { send, sendFile, listen, handleForName, nameForHandle, getRecentChats };
+export { send, sendFile, listen, handleForName, nameForHandle, sendToGroup, getRecentChats };
