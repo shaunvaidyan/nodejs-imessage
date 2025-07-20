@@ -127,16 +127,6 @@ function sendMessageOrFile(handle, messageOrFilepath, isFile) {
         const Messages = Application('Messages');
 
         let target;
-
-        // try {
-        //     console.log(`first try`)
-        //     target = isParticipant
-        //         ? Messages.participants.whose({ handle: handle })[0]
-        //         : Messages.buddies.whose({ handle: handle })[0];
-        // } catch (e) {
-        //     console.log(`2nd try`)
-        //     target = Messages.chats.whose({ name: handle })[0];
-        // }
         try {
             target = Messages.chats.whose({ name: handle })[0];
         } catch (e) {}
